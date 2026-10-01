@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // محتوى الموقع: قراءة عامة، والتعديل للمسؤولين المسجلين فقط
+    match /site/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    // طلبات التواصل: إنشاء عام بحقول محددة، والقراءة والحذف للمسؤولين فقط
+    match /submissions/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['firstName','lastName','phone','email','language','page','submittedAt','createdAt'])
+        && request.resource.data.firstName is string && request.resource.data.firstName.size() < 80
+        && request.resource.data.lastName is string && request.resource.data.lastName.size() < 80
+        && request.resource.data.phone is string && request.resource.data.phone.size() < 30
+        && request.resource.data.email is string && request.resource.data.email.size() < 120;
+      allow read, delete: if request.auth != null;
+      allow update: if false;
+    }
+  }
+}
